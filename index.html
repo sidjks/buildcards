@@ -32,10 +32,19 @@
 <body class="min-h-screen bg-gradient-to-br from-white via-blue-50 to-blue-100 flex flex-col items-center justify-center p-4 font-sans">
 
     <div id="app-container" class="w-full">
-        <!-- Initial Menu Cards View -->
-        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 mb-10 text-center leading-tight">
+        <!-- Main Heading (dynamic) -->
+        <h1 id="main-heading" class="text-4xl md:text-5xl font-extrabold text-gray-800 mb-10 text-center leading-tight">
             Please Select one of the Menu Items:
         </h1>
+
+        <!-- Random Blind Recite Button (moved outside detail-view) -->
+        <div class="flex justify-center mb-8" id="random-blind-recite-button-container">
+            <button id="random-blind-recite-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">
+                Random Blind Recite
+            </button>
+        </div>
+
+        <!-- Initial Menu Cards View -->
         <div id="menu-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <!-- Menu cards will be injected here by JavaScript -->
         </div>
@@ -49,12 +58,10 @@
                 </svg>
             </button>
 
-            <h1 id="selected-item-title" class="text-4xl md:text-5xl font-extrabold text-gray-800 mb-8 text-center leading-tight mt-12">
-                <!-- Selected item name will be injected here -->
-            </h1>
+            <!-- Removed selected-item-title h1 from here, main-heading will be used -->
 
             <!-- Action buttons -->
-            <div class="flex flex-wrap justify-center gap-4 mb-8">
+            <div class="flex flex-wrap justify-center gap-4 mb-8 mt-12"> <!-- Added mt-12 to compensate for removed h1 -->
                 <button id="view-button" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75">
                     View
                 </button>
@@ -67,6 +74,7 @@
                 <button id="blind-recite-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
                     Blind Recite
                 </button>
+                <!-- Random Blind Recite button is now outside this div -->
             </div>
 
             <!-- Message display -->
@@ -102,8 +110,8 @@
 
             <!-- Blind Recite Section (initially hidden) -->
             <div id="blind-recite-section" class="hidden w-full mt-8 p-6 bg-white rounded-2xl shadow-inner flex flex-col items-center">
-                <h3 class="text-2xl font-semibold text-gray-800 mb-3" id="blind-recite-heading">Your Turn:</h3> <!-- Changed heading text -->
-                <pre id="blind-recite-current-line" class="hidden text-base text-gray-700 whitespace-pre-wrap font-sans p-2 bg-gray-100 rounded-lg w-full mb-4 text-center"></pre> <!-- Added hidden class -->
+                <h3 class="text-2xl font-semibold text-gray-800 mb-3" id="blind-recite-heading">Your Turn:</h3>
+                <pre id="blind-recite-current-line" class="hidden text-base text-gray-700 whitespace-pre-wrap font-sans p-2 bg-gray-100 rounded-lg w-full mb-4 text-center"></pre>
                 <textarea id="blind-recite-input-text" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-blue-500 focus:border-blue-500 font-sans resize-none text-base shadow-sm" rows="3" placeholder="Type the line here..."></textarea>
                 <p id="blind-recite-feedback" class="text-lg font-semibold mb-4"></p>
                 <button id="blind-recite-next-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
@@ -112,6 +120,16 @@
                 <p id="blind-recite-summary" class="text-lg font-bold mt-4"></p>
                 <button id="blind-recite-reset-button" class="hidden mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75">
                     Reset Blind Recite
+                </button>
+            </div>
+
+            <!-- Random Blind Recite Section (new, initially hidden) -->
+            <div id="random-blind-recite-section" class="hidden w-full mt-8 p-6 bg-white rounded-2xl shadow-inner flex flex-col items-center">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-3" id="random-blind-recite-heading">Recite: <span id="random-blind-recite-item-name" class="font-bold"></span></h3>
+                <textarea id="random-blind-recite-input-text" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-blue-500 focus:border-blue-500 font-sans resize-none text-base shadow-sm" rows="10" placeholder="Type the full description here..."></textarea>
+                <p id="random-blind-recite-feedback" class="text-lg font-semibold mb-4"></p>
+                <button id="random-blind-recite-check-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75">
+                    Check Recitation
                 </button>
             </div>
 
@@ -129,25 +147,32 @@
         let showReciteSection = false;
         let reciteInputText = '';
         let reciteButtonText = 'Recite Text';
-        let showBlindReciteSection = false; // New state for blind recite
-        let currentReciteLineIndex = 0; // New state for blind recite line tracking
-        let reciteExpectedLines = []; // Stores original lines for display
-        let reciteExpectedNormalizedLines = []; // Stores normalized lines for comparison
-        let blindReciteFeedback = ''; // Feedback for each line in blind recite
-        let blindReciteSummary = ''; // Overall summary for blind recite
-        let allBlindReciteLinesCorrect = true; // Track overall correctness
-        let activeButton = null; // 'view', 'copy', 'recite', 'blindRecite', or null
+        let showBlindReciteSection = false;
+        let currentReciteLineIndex = 0;
+        let reciteExpectedLines = [];
+        let reciteExpectedNormalizedLines = [];
+        let blindReciteFeedback = '';
+        let blindReciteSummary = '';
+        let allBlindReciteLinesCorrect = true;
+        let showRandomBlindReciteSection = false; // New state
+        let randomBlindReciteItem = null; // New state
+        let randomBlindReciteInputText = ''; // New state
+        let randomBlindReciteFeedback = ''; // New state
+        let randomBlindReciteExpectedText = ''; // New state (normalized full text)
+        let activeButton = null; // 'view', 'copy', 'recite', 'blindRecite', 'randomBlindRecite', or null
 
         // --- DOM Elements ---
         const appContainer = document.getElementById('app-container');
+        const mainHeading = document.getElementById('main-heading'); // Reference to the main heading
         const menuCardsGrid = document.getElementById('menu-cards-grid');
         const detailView = document.getElementById('detail-view');
         const backButton = document.getElementById('back-button');
-        const selectedItemTitle = document.getElementById('selected-item-title');
+        // const selectedItemTitle = document.getElementById('selected-item-title'); // No longer needed
         const viewButton = document.getElementById('view-button');
         const copyButton = document.getElementById('copy-button');
         const reciteButton = document.getElementById('recite-button');
-        const blindReciteButton = document.getElementById('blind-recite-button'); // New button
+        const blindReciteButton = document.getElementById('blind-recite-button');
+        const randomBlindReciteButton = document.getElementById('random-blind-recite-button'); // New button
         const messageDisplay = document.getElementById('message-display');
         const copySections = document.getElementById('copy-sections');
         const copyViewContent = document.getElementById('copy-view-content');
@@ -156,41 +181,46 @@
         const reciteSection = document.getElementById('recite-section');
         const reciteInputTextarea = document.getElementById('recite-input-text');
         const reciteTypedButton = document.getElementById('recite-typed-button');
-        const blindReciteSection = document.getElementById('blind-recite-section'); // New section
-        const blindReciteHeading = document.getElementById('blind-recite-heading'); // New: Reference to the heading
-        const blindReciteCurrentLineDisplay = document.getElementById('blind-recite-current-line'); // New
-        const blindReciteInputTextarea = document.getElementById('blind-recite-input-text'); // New
-        const blindReciteFeedbackDisplay = document.getElementById('blind-recite-feedback'); // New
-        const blindReciteNextButton = document.getElementById('blind-recite-next-button'); // New
-        const blindReciteSummaryDisplay = document.getElementById('blind-recite-summary'); // New
-        const blindReciteResetButton = document.getElementById('blind-recite-reset-button'); // New
+        const blindReciteSection = document.getElementById('blind-recite-section');
+        const blindReciteHeading = document.getElementById('blind-recite-heading');
+        const blindReciteCurrentLineDisplay = document.getElementById('blind-recite-current-line');
+        const blindReciteInputTextarea = document.getElementById('blind-recite-input-text');
+        const blindReciteFeedbackDisplay = document.getElementById('blind-recite-feedback');
+        const blindReciteNextButton = document.getElementById('blind-recite-next-button');
+        const blindReciteSummaryDisplay = document.getElementById('blind-recite-summary');
+        const blindReciteResetButton = document.getElementById('blind-recite-reset-button');
+        const randomBlindReciteSection = document.getElementById('random-blind-recite-section');
+        const randomBlindReciteItemName = document.getElementById('random-blind-recite-item-name');
+        const randomBlindReciteInputTextarea = document.getElementById('random-blind-recite-input-text');
+        const randomBlindReciteFeedbackDisplay = document.getElementById('random-blind-recite-feedback');
+        const randomBlindReciteCheckButton = document.getElementById('random-blind-recite-check-button');
 
         // --- Data: Menu Items Descriptions ---
         const menuItemsData = {
             "Big Mac": `
 Crown
-    Big Mac Sauce
-    Shredded Lettuce
+    10:1
     Pickles - 2
-    10:1
-Club
-    Big Mac Sauce
     Shredded Lettuce
-    Cheese
+    Big Mac Sauce
+Club
     10:1
+    Cheese
+    Shredded Lettuce
+    Big Mac Sauce
 Heel
             `,
             "Double Big Mac": `
 Crown
-    Big Mac Sauce
-    Shredded Lettuce
+    10:1 - 2
     Pickles - 2
-    10:1 - 2
-Club
-    Big Mac Sauce
     Shredded Lettuce
-    Cheese
+    Big Mac Sauce
+Club
     10:1 - 2
+    Cheese
+    Lettuce
+    Big Mac Sauce
 Heel
             `,
             "Quarter Pounder": `
@@ -349,14 +379,14 @@ Tortilla - 8”
                            .filter(line => line.trim().length > 0) // Remove truly empty lines
                            .map(line => {
                                const trimmedLine = line.trim();
-                               // Check if it's a main heading (Crown, Club, Heel)
+                               // Check if it's a main heading (Crown, Club, Heel, etc.)
                                if (trimmedLine.toLowerCase() === 'crown' ||
                                    trimmedLine.toLowerCase() === 'club' ||
                                    trimmedLine.toLowerCase() === 'heel' ||
-                                   trimmedLine.toLowerCase() === 'steamed crown' || // For Filet o Fish
-                                   trimmedLine.toLowerCase() === 'steamed heel' ||   // For Filet o Fish
-                                   trimmedLine.toLowerCase() === 'tortilla 10”' ||   // For Wraps
-                                   trimmedLine.toLowerCase() === 'tortilla - 8”'     // For Snack Wrap
+                                   trimmedLine.toLowerCase() === 'steamed crown' ||
+                                   trimmedLine.toLowerCase() === 'steamed heel' ||
+                                   trimmedLine.toLowerCase() === 'tortilla 10”' ||
+                                   trimmedLine.toLowerCase() === 'tortilla - 8”'
                                ) {
                                    return trimmedLine; // Keep these unindented
                                } else {
@@ -365,27 +395,39 @@ Tortilla - 8”
                            });
         }
 
-
-        // Normalizes a single line for case-insensitive and whitespace-lenient comparison
-        function normalizeLine(line) {
-            return line.replace(/\s+/g, ' ').toLowerCase().trim();
+        // Normalizes a single line or full text for case-insensitive and whitespace-lenient comparison
+        function normalizeTextForComparison(text) {
+            return text.split('\n')
+                       .map(line => line.trim())
+                       .filter(line => line.length > 0)
+                       .join(' ')
+                       .replace(/\s+/g, ' ')
+                       .toLowerCase()
+                       .trim();
         }
 
         // --- Render Functions (to update UI based on state) ---
 
         function renderApp() {
+            // Update main heading text based on selectedItem
+            if (selectedItem) {
+                mainHeading.textContent = selectedItem;
+                mainHeading.classList.remove('mb-10'); // Adjust margin for selected item view
+                mainHeading.classList.add('mb-8', 'mt-12'); // Add top margin for back button offset
+            } else {
+                mainHeading.textContent = 'Please Select one of the Menu Items:';
+                mainHeading.classList.remove('mb-8', 'mt-12');
+                mainHeading.classList.add('mb-10');
+            }
+
             // Hide/show main views
             if (selectedItem) {
-                appContainer.classList.remove('max-w-4xl');
-                appContainer.classList.add('w-full');
                 menuCardsGrid.classList.add('hidden');
+                randomBlindReciteButton.classList.add('hidden'); // Hide random button on detail view
                 detailView.classList.remove('hidden');
-                detailView.classList.add('w-full');
-                selectedItemTitle.textContent = selectedItem;
             } else {
-                appContainer.classList.remove('max-w-2xl');
-                appContainer.classList.add('w-full');
                 menuCardsGrid.classList.remove('hidden');
+                randomBlindReciteButton.classList.remove('hidden'); // Show random button on main view
                 detailView.classList.add('hidden');
             }
 
@@ -412,7 +454,7 @@ Tortilla - 8”
             if (showCopySections) {
                 copySections.classList.remove('hidden');
                 copyTypedButton.classList.remove('hidden');
-                copyViewContent.textContent = getDetailedViewLines(selectedItem).join('\n'); // Show original lines
+                copyViewContent.textContent = getDetailedViewLines(selectedItem).join('\n');
                 copyInputTextarea.value = copyInputText;
                 copyTypedButton.textContent = copyButtonText;
             } else {
@@ -433,19 +475,18 @@ Tortilla - 8”
             if (showBlindReciteSection) {
                 blindReciteSection.classList.remove('hidden');
                 if (currentReciteLineIndex < reciteExpectedLines.length) {
-                    blindReciteCurrentLineDisplay.classList.add('hidden'); // Ensure line content is hidden
-                    blindReciteHeading.textContent = `Your Turn (Line ${currentReciteLineIndex + 1} of ${reciteExpectedLines.length}):`; // Update heading
-                    blindReciteInputTextarea.value = ''; // Clear input for new line
+                    blindReciteCurrentLineDisplay.classList.add('hidden');
+                    blindReciteHeading.textContent = `Your Turn (Line ${currentReciteLineIndex + 1} of ${reciteExpectedLines.length}):`;
+                    blindReciteInputTextarea.value = '';
                     blindReciteNextButton.classList.remove('hidden');
                     blindReciteSummaryDisplay.classList.add('hidden');
                     blindReciteResetButton.classList.add('hidden');
-                    blindReciteInputTextarea.focus(); // Focus input for typing
+                    blindReciteInputTextarea.focus();
                 } else {
-                    // End of recitation
-                    blindReciteCurrentLineDisplay.classList.add('hidden'); // Keep line content hidden
-                    blindReciteHeading.textContent = 'Recitation Complete!'; // Update heading
+                    blindReciteCurrentLineDisplay.classList.add('hidden');
+                    blindReciteHeading.textContent = 'Recitation Complete!';
                     blindReciteInputTextarea.value = '';
-                    blindReciteInputTextarea.disabled = true; // Disable input
+                    blindReciteInputTextarea.disabled = true;
                     blindReciteNextButton.classList.add('hidden');
                     blindReciteSummaryDisplay.classList.remove('hidden');
                     blindReciteSummaryDisplay.textContent = allBlindReciteLinesCorrect ? 'All lines were correct!' : 'Some lines were wrong.';
@@ -464,15 +505,33 @@ Tortilla - 8”
                 blindReciteSection.classList.add('hidden');
             }
 
+            // Update Random Blind Recite section visibility
+            if (showRandomBlindReciteSection) {
+                randomBlindReciteSection.classList.remove('hidden');
+                randomBlindReciteItemName.textContent = randomBlindReciteItem;
+                randomBlindReciteInputTextarea.value = randomBlindReciteInputText;
+                randomBlindReciteFeedbackDisplay.textContent = randomBlindReciteFeedback;
+                randomBlindReciteFeedbackDisplay.classList.remove('text-green-600', 'text-red-600');
+                if (randomBlindReciteFeedback === 'Correct!') {
+                    randomBlindReciteFeedbackDisplay.classList.add('text-green-600');
+                } else if (randomBlindReciteFeedback === 'Wrong!') {
+                    randomBlindReciteFeedbackDisplay.classList.add('text-red-600');
+                }
+                randomBlindReciteInputTextarea.focus(); // Focus input
+            } else {
+                randomBlindReciteSection.classList.add('hidden');
+            }
+
 
             // Update active button styling
-            [viewButton, copyButton, reciteButton, blindReciteButton].forEach(btn => {
-                btn.classList.remove('ring-4', 'ring-green-300', 'ring-purple-300', 'ring-orange-300', 'ring-blue-300', 'ring-offset-2', 'ring-offset-white');
+            [viewButton, copyButton, reciteButton, blindReciteButton, randomBlindReciteButton].forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-green-300', 'ring-purple-300', 'ring-orange-300', 'ring-blue-300', 'ring-indigo-300', 'ring-offset-2', 'ring-offset-white');
                 // Revert to original styling for non-active buttons
                 if (btn.id === 'view-button') btn.className = 'bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75';
                 if (btn.id === 'copy-button') btn.className = 'bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75';
                 if (btn.id === 'recite-button') btn.className = 'bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-75';
                 if (btn.id === 'blind-recite-button') btn.className = 'bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75';
+                if (btn.id === 'random-blind-recite-button') btn.className = 'bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75';
             });
 
             if (activeButton === 'view') {
@@ -483,6 +542,8 @@ Tortilla - 8”
                 reciteButton.classList.add('ring-4', 'ring-orange-300', 'ring-offset-2', 'ring-offset-white');
             } else if (activeButton === 'blindRecite') {
                 blindReciteButton.classList.add('ring-4', 'ring-blue-300', 'ring-offset-2', 'ring-offset-white');
+            } else if (activeButton === 'randomBlindRecite') {
+                randomBlindReciteButton.classList.add('ring-4', 'ring-indigo-300', 'ring-offset-2', 'ring-offset-white');
             }
         }
 
@@ -496,9 +557,11 @@ Tortilla - 8”
             copyButtonText = 'Correct Text';
             showReciteSection = false;
             reciteButtonText = 'Recite Text';
-            showBlindReciteSection = false; // Reset blind recite state
+            showBlindReciteSection = false;
             blindReciteFeedback = '';
             blindReciteSummary = '';
+            showRandomBlindReciteSection = false; // Reset new mode
+            randomBlindReciteFeedback = '';
             activeButton = null;
             renderApp();
         }
@@ -511,27 +574,30 @@ Tortilla - 8”
             copyButtonText = 'Correct Text';
             showReciteSection = false;
             reciteButtonText = 'Recite Text';
-            showBlindReciteSection = false; // Reset blind recite state
+            showBlindReciteSection = false;
             blindReciteFeedback = '';
             blindReciteSummary = '';
+            showRandomBlindReciteSection = false; // Reset new mode
+            randomBlindReciteFeedback = '';
             activeButton = null;
             renderApp();
         }
 
         function handleViewClick() {
             isLoading = true;
-            message = ''; // Clear previous message before showing loading
-            renderApp(); // Render to show loading state
-            setTimeout(() => { // Simulate async operation
-                const viewText = getDetailedViewLines(selectedItem).join('\n'); // Join lines for display
+            message = '';
+            renderApp();
+            setTimeout(() => {
+                const viewText = getDetailedViewLines(selectedItem).join('\n');
                 message = viewText.trim();
                 isLoading = false;
                 showCopySections = false;
                 showReciteSection = false;
-                showBlindReciteSection = false; // Hide blind recite
+                showBlindReciteSection = false;
+                showRandomBlindReciteSection = false; // Hide new mode
                 activeButton = 'view';
                 renderApp();
-            }, 100); // Small delay to show loading
+            }, 100);
         }
 
         function handleCopyClick() {
@@ -539,15 +605,16 @@ Tortilla - 8”
             copyInputText = '';
             message = '';
             copyButtonText = 'Correct Text';
-            showReciteSection = false; // Hide recite if copy is clicked
-            showBlindReciteSection = false; // Hide blind recite
+            showReciteSection = false;
+            showBlindReciteSection = false;
+            showRandomBlindReciteSection = false; // Hide new mode
             activeButton = 'copy';
             renderApp();
         }
 
         function handleCopyTypedText() {
-            const expectedText = normalizeLine(getDetailedViewLines(selectedItem).join(' ')); // Normalize full text for comparison
-            const enteredText = normalizeLine(copyInputText);
+            const expectedText = normalizeTextForComparison(getDetailedViewLines(selectedItem).join('\n'));
+            const enteredText = normalizeTextForComparison(copyInputText);
 
             if (enteredText === expectedText) {
                 const el = document.createElement('textarea');
@@ -557,8 +624,8 @@ Tortilla - 8”
                 try {
                     document.execCommand('copy');
                     copyButtonText = 'Correct!';
-                    copyInputText = ''; // Clear input on success
-                    message = ''; // Clear any previous messages
+                    copyInputText = '';
+                    message = '';
                 } catch (err) {
                     message = 'Failed to copy to clipboard.';
                     copyButtonText = 'Wrong!';
@@ -573,7 +640,7 @@ Tortilla - 8”
 
         function handleCopyInput(e) {
             copyInputText = e.target.value;
-            copyButtonText = 'Correct Text'; // Reset button text on input change
+            copyButtonText = 'Correct Text';
             renderApp();
         }
 
@@ -582,25 +649,26 @@ Tortilla - 8”
             reciteInputText = '';
             message = '';
             reciteButtonText = 'Recite Text';
-            showCopySections = false; // Hide copy if recite is clicked
-            showBlindReciteSection = false; // Hide blind recite
+            showCopySections = false;
+            showBlindReciteSection = false;
+            showRandomBlindReciteSection = false; // Hide new mode
             activeButton = 'recite';
             renderApp();
         }
 
         function handleReciteInput(e) {
             reciteInputText = e.target.value;
-            reciteButtonText = 'Recite Text'; // Reset button text on input change
+            reciteButtonText = 'Recite Text';
             renderApp();
         }
 
         function handleReciteTypedText() {
-            const expectedText = normalizeLine(getDetailedViewLines(selectedItem).join(' ')); // Normalize full text for comparison
-            const enteredText = normalizeLine(reciteInputText);
+            const expectedText = normalizeTextForComparison(getDetailedViewLines(selectedItem).join('\n'));
+            const enteredText = normalizeTextForComparison(reciteInputText);
 
             if (enteredText === expectedText) {
                 reciteButtonText = 'Correct!';
-                reciteInputText = ''; // Clear input on success
+                reciteInputText = '';
                 message = '';
             } else {
                 reciteButtonText = 'Wrong!';
@@ -614,14 +682,15 @@ Tortilla - 8”
             showBlindReciteSection = true;
             currentReciteLineIndex = 0;
             reciteExpectedLines = getDetailedViewLines(selectedItem);
-            reciteExpectedNormalizedLines = reciteExpectedLines.map(line => normalizeLine(line));
+            reciteExpectedNormalizedLines = reciteExpectedLines.map(line => normalizeTextForComparison(line));
             blindReciteFeedback = '';
             blindReciteSummary = '';
-            allBlindReciteLinesCorrect = true; // Reset overall correctness
-            blindReciteInputTextarea.disabled = false; // Ensure input is enabled
-            message = ''; // Clear general messages
-            showCopySections = false; // Hide other sections
-            showReciteSection = false; // Hide other sections
+            allBlindReciteLinesCorrect = true;
+            blindReciteInputTextarea.disabled = false;
+            message = '';
+            showCopySections = false;
+            showReciteSection = false;
+            showRandomBlindReciteSection = false; // Hide new mode
             activeButton = 'blindRecite';
             renderApp();
         }
@@ -629,22 +698,22 @@ Tortilla - 8”
         function handleNextBlindReciteLine() {
             if (currentReciteLineIndex < reciteExpectedLines.length) {
                 const expectedLine = reciteExpectedNormalizedLines[currentReciteLineIndex];
-                const enteredLine = normalizeLine(blindReciteInputTextarea.value);
+                const enteredLine = normalizeTextForComparison(blindReciteInputTextarea.value);
 
                 if (enteredLine === expectedLine) {
                     blindReciteFeedback = 'Correct!';
                 } else {
                     blindReciteFeedback = 'Wrong!';
-                    allBlindReciteLinesCorrect = false; // Mark as incorrect if any line is wrong
+                    allBlindReciteLinesCorrect = false;
                 }
                 currentReciteLineIndex++;
-                renderApp(); // Render to show feedback and next line
+                renderApp();
             }
         }
 
         function handleBlindReciteInputKeydown(e) {
             if (e.key === 'Enter') {
-                e.preventDefault(); // Prevent new line in textarea
+                e.preventDefault();
                 handleNextBlindReciteLine();
             }
         }
@@ -658,11 +727,74 @@ Tortilla - 8”
             renderApp();
         }
 
+        // --- Random Blind Recite Functions ---
+        function startNewRandomBlindRecite() {
+            const itemNames = Object.keys(menuItemsData);
+            const randomIndex = Math.floor(Math.random() * itemNames.length);
+            randomBlindReciteItem = itemNames[randomIndex];
+
+            const fullDescriptionLines = getDetailedViewLines(randomBlindReciteItem);
+            randomBlindReciteExpectedText = normalizeTextForComparison(fullDescriptionLines.join('\n'));
+
+            randomBlindReciteInputText = '';
+            randomBlindReciteFeedback = '';
+            randomBlindReciteInputTextarea.disabled = false;
+            randomBlindReciteItemName.textContent = randomBlindReciteItem; // Update item name in heading
+        }
+
+        function handleRandomBlindReciteClick() {
+            showRandomBlindReciteSection = true;
+            message = '';
+            showCopySections = false;
+            showReciteSection = false;
+            showBlindReciteSection = false;
+            activeButton = 'randomBlindRecite';
+            startNewRandomBlindRecite(); // Start with a new random item
+            renderApp();
+        }
+
+        function handleRandomBlindReciteCheck() {
+            const enteredText = normalizeTextForComparison(randomBlindReciteInputTextarea.value);
+
+            if (enteredText === randomBlindReciteExpectedText) {
+                randomBlindReciteFeedback = 'Correct!';
+                // Automatically go to next random item
+                setTimeout(() => {
+                    startNewRandomBlindRecite();
+                    renderApp(); // Re-render to show new item
+                }, 500); // Short delay for feedback visibility
+            } else {
+                randomBlindReciteFeedback = 'Wrong!';
+                // Switch to copy mode for the item they got wrong
+                setTimeout(() => {
+                    selectedItem = randomBlindReciteItem; // Set the item they got wrong
+                    handleCopyClick(); // Switch to copy mode for this item
+                    randomBlindReciteFeedback = ''; // Clear feedback
+                    showRandomBlindReciteSection = false; // Hide random recite section
+                    renderApp();
+                }, 1000); // Short delay before switching mode
+            }
+            renderApp(); // Render immediately to show feedback
+        }
+
+        function handleRandomBlindReciteInput(e) {
+            randomBlindReciteInputText = e.target.value;
+            randomBlindReciteFeedback = ''; // Clear feedback when user starts typing
+            renderApp();
+        }
+
+        function handleRandomBlindReciteInputKeydown(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent new line in textarea
+                handleRandomBlindReciteCheck();
+            }
+        }
+
 
         // --- Initial Render and Event Listeners Setup ---
         document.addEventListener('DOMContentLoaded', () => {
             // Render menu cards
-            const menuItems = Object.keys(menuItemsData); // Get keys from data object
+            const menuItems = Object.keys(menuItemsData);
             menuItems.forEach(item => {
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transform hover:-translate-y-2 transition duration-300 ease-in-out border border-gray-100 hover:border-blue-300 group";
@@ -683,10 +815,17 @@ Tortilla - 8”
             reciteButton.addEventListener('click', handleReciteClick);
             reciteTypedButton.addEventListener('click', handleReciteTypedText);
             reciteInputTextarea.addEventListener('input', handleReciteInput);
-            blindReciteButton.addEventListener('click', handleBlindReciteClick); // New event listener
-            blindReciteNextButton.addEventListener('click', handleNextBlindReciteLine); // New event listener
-            blindReciteInputTextarea.addEventListener('keydown', handleBlindReciteInputKeydown); // New event listener for Enter key
-            blindReciteResetButton.addEventListener('click', handleResetBlindRecite); // New event listener
+            blindReciteButton.addEventListener('click', handleBlindReciteClick);
+            blindReciteNextButton.addEventListener('click', handleNextBlindReciteLine);
+            blindReciteInputTextarea.addEventListener('keydown', handleBlindReciteInputKeydown);
+            blindReciteResetButton.addEventListener('click', handleResetBlindRecite);
+
+            // New random blind recite event listeners
+            randomBlindReciteButton.addEventListener('click', handleRandomBlindReciteClick);
+            randomBlindReciteCheckButton.addEventListener('click', handleRandomBlindReciteCheck);
+            randomBlindReciteInputTextarea.addEventListener('input', handleRandomBlindReciteInput);
+            randomBlindReciteInputTextarea.addEventListener('keydown', handleRandomBlindReciteInputKeydown);
+
 
             // Initial render
             renderApp();
