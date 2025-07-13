@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Selection App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for smoother transitions and consistent font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Ensure pre tags respect whitespace but wrap if needed */
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        /* Hide scrollbar for pre-formatted content if it overflows, but allow content to wrap */
+        .overflow-auto {
+            overflow: auto;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-white via-blue-50 to-blue-100 flex flex-col items-center justify-center p-4 font-sans">
+
+    <div id="app-container" class="w-full">
+        <!-- Initial Menu Cards View -->
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 mb-10 text-center leading-tight">
+            Please Select one of the Menu Items:
+        </h1>
+        <div id="menu-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Menu cards will be injected here by JavaScript -->
+        </div>
+
+        <!-- Selected Item Detail View (initially hidden) -->
+        <div id="detail-view" class="hidden w-full bg-white rounded-3xl shadow-xl p-8 md:p-10 flex flex-col items-center relative transform transition-all duration-300 ease-in-out scale-95 md:scale-100">
+            <!-- Back Arrow Button -->
+            <button id="back-button" class="absolute top-6 left-6 p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-300 shadow-md" aria-label="Back to Menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </button>
+
+            <h1 id="selected-item-title" class="text-4xl md:text-5xl font-extrabold text-gray-800 mb-8 text-center leading-tight mt-12">
+                <!-- Selected item name will be injected here -->
+            </h1>
+
+            <!-- Action buttons -->
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <button id="view-button" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75">
+                    View
+                </button>
+                <button id="copy-button" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75">
+                    Copy
+                </button>
+                <button id="recite-button" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-75">
+                    Recite
+                </button>
+                <button id="blind-recite-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
+                    Blind Recite
+                </button>
+            </div>
+
+            <!-- Message display -->
+            <pre id="message-display" class="hidden text-base text-gray-700 mt-6 text-left whitespace-pre-wrap bg-gray-50 p-4 rounded-lg shadow-inner w-full max-w-xl mx-auto animate-fade-in"></pre>
+
+            <!-- Copy Sections (side-by-side, initially hidden) -->
+            <div id="copy-sections" class="hidden w-full mt-8 p-6 bg-gray-50 rounded-2xl shadow-inner flex flex-col md:flex-row md:space-x-6 items-stretch">
+                <!-- Section 1: What the View does -->
+                <div class="mb-6 md:mb-0 p-5 bg-white rounded-xl border border-gray-200 w-full md:w-1/2 flex flex-col shadow-md">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-3">View Content:</h3>
+                    <pre id="copy-view-content" class="text-base text-gray-700 whitespace-pre-wrap font-sans flex-grow overflow-auto p-2 bg-gray-100 rounded-lg"></pre>
+                </div>
+
+                <!-- Section 2: Type and Copy -->
+                <div class="p-5 bg-white rounded-xl border border-gray-200 w-full md:w-1/2 flex flex-col shadow-md">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-3">Type and Copy:</h3>
+                    <textarea id="copy-input-text" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-blue-500 focus:border-blue-500 font-sans resize-none flex-grow text-base shadow-sm" placeholder="Type text to copy here..."></textarea>
+                </div>
+            </div>
+            <!-- Copy Typed Text button (initially hidden) -->
+            <button id="copy-typed-button" class="hidden mt-6 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75">
+                Correct Text
+            </button>
+
+            <!-- Recite Section (only input box, initially hidden) -->
+            <div id="recite-section" class="hidden w-full mt-8 p-6 bg-white rounded-2xl shadow-inner flex flex-col items-center">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-3">Recite Content:</h3>
+                <textarea id="recite-input-text" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-blue-500 focus:border-blue-500 font-sans resize-none text-base shadow-sm" rows="8" placeholder="Type the content here..."></textarea>
+                <button id="recite-typed-button" class="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-75">
+                    Recite Text
+                </button>
+            </div>
+
+            <!-- Blind Recite Section (initially hidden) -->
+            <div id="blind-recite-section" class="hidden w-full mt-8 p-6 bg-white rounded-2xl shadow-inner flex flex-col items-center">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-3" id="blind-recite-heading">Your Turn:</h3> <!-- Changed heading text -->
+                <pre id="blind-recite-current-line" class="hidden text-base text-gray-700 whitespace-pre-wrap font-sans p-2 bg-gray-100 rounded-lg w-full mb-4 text-center"></pre> <!-- Added hidden class -->
+                <textarea id="blind-recite-input-text" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-blue-500 focus:border-blue-500 font-sans resize-none text-base shadow-sm" rows="3" placeholder="Type the line here..."></textarea>
+                <p id="blind-recite-feedback" class="text-lg font-semibold mb-4"></p>
+                <button id="blind-recite-next-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+                    Next Line
+                </button>
+                <p id="blind-recite-summary" class="text-lg font-bold mt-4"></p>
+                <button id="blind-recite-reset-button" class="hidden mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75">
+                    Reset Blind Recite
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- State Variables (simulated React state) ---
+        let selectedItem = null;
+        let message = '';
+        let isLoading = false;
+        let showCopySections = false;
+        let copyInputText = '';
+        let copyButtonText = 'Correct Text';
+        let showReciteSection = false;
+        let reciteInputText = '';
+        let reciteButtonText = 'Recite Text';
+        let showBlindReciteSection = false; // New state for blind recite
+        let currentReciteLineIndex = 0; // New state for blind recite line tracking
+        let reciteExpectedLines = []; // Stores original lines for display
+        let reciteExpectedNormalizedLines = []; // Stores normalized lines for comparison
+        let blindReciteFeedback = ''; // Feedback for each line in blind recite
+        let blindReciteSummary = ''; // Overall summary for blind recite
+        let allBlindReciteLinesCorrect = true; // Track overall correctness
+        let activeButton = null; // 'view', 'copy', 'recite', 'blindRecite', or null
+
+        // --- DOM Elements ---
+        const appContainer = document.getElementById('app-container');
+        const menuCardsGrid = document.getElementById('menu-cards-grid');
+        const detailView = document.getElementById('detail-view');
+        const backButton = document.getElementById('back-button');
+        const selectedItemTitle = document.getElementById('selected-item-title');
+        const viewButton = document.getElementById('view-button');
+        const copyButton = document.getElementById('copy-button');
+        const reciteButton = document.getElementById('recite-button');
+        const blindReciteButton = document.getElementById('blind-recite-button'); // New button
+        const messageDisplay = document.getElementById('message-display');
+        const copySections = document.getElementById('copy-sections');
+        const copyViewContent = document.getElementById('copy-view-content');
+        const copyInputTextarea = document.getElementById('copy-input-text');
+        const copyTypedButton = document.getElementById('copy-typed-button');
+        const reciteSection = document.getElementById('recite-section');
+        const reciteInputTextarea = document.getElementById('recite-input-text');
+        const reciteTypedButton = document.getElementById('recite-typed-button');
+        const blindReciteSection = document.getElementById('blind-recite-section'); // New section
+        const blindReciteHeading = document.getElementById('blind-recite-heading'); // New: Reference to the heading
+        const blindReciteCurrentLineDisplay = document.getElementById('blind-recite-current-line'); // New
+        const blindReciteInputTextarea = document.getElementById('blind-recite-input-text'); // New
+        const blindReciteFeedbackDisplay = document.getElementById('blind-recite-feedback'); // New
+        const blindReciteNextButton = document.getElementById('blind-recite-next-button'); // New
+        const blindReciteSummaryDisplay = document.getElementById('blind-recite-summary'); // New
+        const blindReciteResetButton = document.getElementById('blind-recite-reset-button'); // New
+
+        // --- Data: Menu Items Descriptions ---
+        const menuItemsData = {
+            "Big Mac": `
+Crown
+    10:1
+    Pickles - 2
+    Shredded Lettuce
+    Big Mac Sauce
+Club
+    10:1
+    Cheese
+    Shredded Lettuce
+    Big Mac Sauce
+Heel
+            `,
+            "Double Big Mac": `
+Crown
+    10:1 - 2
+    Pickles - 2
+    Shredded Lettuce
+    Big Mac Sauce
+Club
+    10:1 - 2
+    Cheese
+    Lettuce
+    Big Mac Sauce
+Heel
+            `,
+            "Quarter Pounder": `
+Crown
+    Mustard
+    Ketchup
+    Onions - 8-12
+    Pickles - 2
+    Cheese
+    4:1
+    Cheese
+Heel
+            `,
+            "Double Quarter Pounder": `
+Crown
+    Mustard
+    Ketchup
+    Onions - 8-12
+    Pickles - 2
+    Cheese
+    4:1
+    Cheese
+    4:1
+    Cheese
+Heel
+            `,
+            "BBQ Bacon Angus": `
+Crown
+    House Grill Sauce
+    Aussie Cheese
+    Rasher Bacon - 2
+    3:1
+    Aussie Cheese
+    Red Onions - 8-12
+    McChicken Sauce
+Heel
+            `,
+            "Classic Angus": `
+Crown
+    Mustard
+    McChicken Sauce
+    Red Onions - 8-12
+    Pickles - 2
+    Shredded Lettuce
+    Tomato - 2
+    Cheese
+    3:1
+    Cheese
+Heel
+            `,
+            "Hamburger": `
+Crown
+    Mustard
+    Ketchup
+    Pickle
+    10:1
+Heel
+            `,
+            "Cheeseburger": `
+Crown
+    Mustard
+    Ketchup
+    Pickle
+    Cheese
+    10:1
+Heel
+            `,
+            "Double Cheeseburger": `
+Crown
+    Mustard
+    Ketchup
+    Pickles - 2
+    Cheese
+    10:1
+    Cheese
+    10:1
+Heel
+            `,
+            "Triple Cheeseburger": `
+Crown
+    Mustard
+    Ketchup
+    Pickles - 2
+    Cheese
+    10:1
+    Cheese
+    10:1
+    Cheese
+    10:1
+Heel
+            `,
+            "McCrispy": `
+Crown
+    McCrispy Sauce
+    Shredded Lettuce
+    McCrispy
+Heel
+            `,
+            "McCrispy Deluxe": `
+Crown
+    McCrispy Sauce
+    Shredded Lettuce
+    Tomato Slice
+    Aussie Cheese
+    McCrispy
+Heel
+            `,
+            "McSpicy": `
+Crown
+    McChicken Sauce
+    Shredded Lettuce
+    McSpicy
+Heel
+            `,
+            "Chicken n Cheese": `
+Crown
+    McChicken Sauce
+    1/2 Cheese
+    Chicken
+Heel
+            `,
+            "Filet o Fish": `
+Steamed Crown
+    Tar Tar Sauce
+    Filet
+    1/2 Cheese
+Steamed Heel
+            `,
+            "Classic Chicken Wrap": `
+Tortilla 10”
+    McCrispy
+    Lettuce
+    Tomato - 2
+    1/2 McCrispy or 1/2 Grilled
+            `,
+            "Spicy Chicken Wrap": `
+Tortilla 10”
+    McChicken
+    Shredded Lettuce
+    Tomato - 2
+    1/2 McSpicy
+            `,
+            "Chicken Snack Wrap": `
+Tortilla - 8”
+    McChicken Sauce Shredded Lettuce
+    1/2 McCrispy or 1/2 Grilled
+            `
+        };
+
+        // --- Helper Functions ---
+
+        // Returns an array of lines from the description, preserving indentation for non-heading lines
+        function getDetailedViewLines(item) {
+            const fullText = menuItemsData[item] || `Details for: ${item}.`;
+            return fullText.split('\n')
+                           .filter(line => line.trim().length > 0) // Remove truly empty lines
+                           .map(line => {
+                               const trimmedLine = line.trim();
+                               // Check if it's a main heading (Crown, Club, Heel)
+                               if (trimmedLine.toLowerCase() === 'crown' ||
+                                   trimmedLine.toLowerCase() === 'club' ||
+                                   trimmedLine.toLowerCase() === 'heel' ||
+                                   trimmedLine.toLowerCase() === 'steamed crown' || // For Filet o Fish
+                                   trimmedLine.toLowerCase() === 'steamed heel' ||   // For Filet o Fish
+                                   trimmedLine.toLowerCase() === 'tortilla 10”' ||   // For Wraps
+                                   trimmedLine.toLowerCase() === 'tortilla - 8”'     // For Snack Wrap
+                               ) {
+                                   return trimmedLine; // Keep these unindented
+                               } else {
+                                   return line; // Keep original leading spaces for other lines
+                               }
+                           });
+        }
+
+
+        // Normalizes a single line for case-insensitive and whitespace-lenient comparison
+        function normalizeLine(line) {
+            return line.replace(/\s+/g, ' ').toLowerCase().trim();
+        }
+
+        // --- Render Functions (to update UI based on state) ---
+
+        function renderApp() {
+            // Hide/show main views
+            if (selectedItem) {
+                appContainer.classList.remove('max-w-4xl');
+                appContainer.classList.add('w-full');
+                menuCardsGrid.classList.add('hidden');
+                detailView.classList.remove('hidden');
+                detailView.classList.add('w-full');
+                selectedItemTitle.textContent = selectedItem;
+            } else {
+                appContainer.classList.remove('max-w-2xl');
+                appContainer.classList.add('w-full');
+                menuCardsGrid.classList.remove('hidden');
+                detailView.classList.add('hidden');
+            }
+
+            // Update message display
+            if (message) {
+                messageDisplay.textContent = message;
+                messageDisplay.classList.remove('hidden');
+                messageDisplay.classList.add('animate-fade-in');
+            } else {
+                messageDisplay.classList.add('hidden');
+                messageDisplay.classList.remove('animate-fade-in');
+            }
+
+            // Update loading state
+            if (isLoading) {
+                messageDisplay.textContent = 'Loading...';
+                messageDisplay.classList.remove('hidden');
+                messageDisplay.classList.add('animate-pulse');
+            } else {
+                messageDisplay.classList.remove('animate-pulse');
+            }
+
+            // Update Copy sections visibility
+            if (showCopySections) {
+                copySections.classList.remove('hidden');
+                copyTypedButton.classList.remove('hidden');
+                copyViewContent.textContent = getDetailedViewLines(selectedItem).join('\n'); // Show original lines
+                copyInputTextarea.value = copyInputText;
+                copyTypedButton.textContent = copyButtonText;
+            } else {
+                copySections.classList.add('hidden');
+                copyTypedButton.classList.add('hidden');
+            }
+
+            // Update Recite section visibility
+            if (showReciteSection) {
+                reciteSection.classList.remove('hidden');
+                reciteInputTextarea.value = reciteInputText;
+                reciteTypedButton.textContent = reciteButtonText;
+            } else {
+                reciteSection.classList.add('hidden');
+            }
+
+            // Update Blind Recite section visibility
+            if (showBlindReciteSection) {
+                blindReciteSection.classList.remove('hidden');
+                if (currentReciteLineIndex < reciteExpectedLines.length) {
+                    blindReciteCurrentLineDisplay.classList.add('hidden'); // Ensure line content is hidden
+                    blindReciteHeading.textContent = `Your Turn (Line ${currentReciteLineIndex + 1} of ${reciteExpectedLines.length}):`; // Update heading
+                    blindReciteInputTextarea.value = ''; // Clear input for new line
+                    blindReciteNextButton.classList.remove('hidden');
+                    blindReciteSummaryDisplay.classList.add('hidden');
+                    blindReciteResetButton.classList.add('hidden');
+                    blindReciteInputTextarea.focus(); // Focus input for typing
+                } else {
+                    // End of recitation
+                    blindReciteCurrentLineDisplay.classList.add('hidden'); // Keep line content hidden
+                    blindReciteHeading.textContent = 'Recitation Complete!'; // Update heading
+                    blindReciteInputTextarea.value = '';
+                    blindReciteInputTextarea.disabled = true; // Disable input
+                    blindReciteNextButton.classList.add('hidden');
+                    blindReciteSummaryDisplay.classList.remove('hidden');
+                    blindReciteSummaryDisplay.textContent = allBlindReciteLinesCorrect ? 'All lines were correct!' : 'Some lines were wrong.';
+                    blindReciteSummaryDisplay.classList.remove('text-green-600', 'text-red-600');
+                    blindReciteSummaryDisplay.classList.add(allBlindReciteLinesCorrect ? 'text-green-600' : 'text-red-600');
+                    blindReciteResetButton.classList.remove('hidden');
+                }
+                blindReciteFeedbackDisplay.textContent = blindReciteFeedback;
+                blindReciteFeedbackDisplay.classList.remove('text-green-600', 'text-red-600');
+                if (blindReciteFeedback === 'Correct!') {
+                    blindReciteFeedbackDisplay.classList.add('text-green-600');
+                } else if (blindReciteFeedback === 'Wrong!') {
+                    blindReciteFeedbackDisplay.classList.add('text-red-600');
+                }
+            } else {
+                blindReciteSection.classList.add('hidden');
+            }
+
+
+            // Update active button styling
+            [viewButton, copyButton, reciteButton, blindReciteButton].forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-green-300', 'ring-purple-300', 'ring-orange-300', 'ring-blue-300', 'ring-offset-2', 'ring-offset-white');
+                // Revert to original styling for non-active buttons
+                if (btn.id === 'view-button') btn.className = 'bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75';
+                if (btn.id === 'copy-button') btn.className = 'bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75';
+                if (btn.id === 'recite-button') btn.className = 'bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-75';
+                if (btn.id === 'blind-recite-button') btn.className = 'bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75';
+            });
+
+            if (activeButton === 'view') {
+                viewButton.classList.add('ring-4', 'ring-green-300', 'ring-offset-2', 'ring-offset-white');
+            } else if (activeButton === 'copy') {
+                copyButton.classList.add('ring-4', 'ring-purple-300', 'ring-offset-2', 'ring-offset-white');
+            } else if (activeButton === 'recite') {
+                reciteButton.classList.add('ring-4', 'ring-orange-300', 'ring-offset-2', 'ring-offset-white');
+            } else if (activeButton === 'blindRecite') {
+                blindReciteButton.classList.add('ring-4', 'ring-blue-300', 'ring-offset-2', 'ring-offset-white');
+            }
+        }
+
+        // --- Event Handlers ---
+
+        function handleCardClick(item) {
+            selectedItem = item;
+            message = '';
+            isLoading = false;
+            showCopySections = false;
+            copyButtonText = 'Correct Text';
+            showReciteSection = false;
+            reciteButtonText = 'Recite Text';
+            showBlindReciteSection = false; // Reset blind recite state
+            blindReciteFeedback = '';
+            blindReciteSummary = '';
+            activeButton = null;
+            renderApp();
+        }
+
+        function handleBackToMenu() {
+            selectedItem = null;
+            message = '';
+            isLoading = false;
+            showCopySections = false;
+            copyButtonText = 'Correct Text';
+            showReciteSection = false;
+            reciteButtonText = 'Recite Text';
+            showBlindReciteSection = false; // Reset blind recite state
+            blindReciteFeedback = '';
+            blindReciteSummary = '';
+            activeButton = null;
+            renderApp();
+        }
+
+        function handleViewClick() {
+            isLoading = true;
+            message = ''; // Clear previous message before showing loading
+            renderApp(); // Render to show loading state
+            setTimeout(() => { // Simulate async operation
+                const viewText = getDetailedViewLines(selectedItem).join('\n'); // Join lines for display
+                message = viewText.trim();
+                isLoading = false;
+                showCopySections = false;
+                showReciteSection = false;
+                showBlindReciteSection = false; // Hide blind recite
+                activeButton = 'view';
+                renderApp();
+            }, 100); // Small delay to show loading
+        }
+
+        function handleCopyClick() {
+            showCopySections = true;
+            copyInputText = '';
+            message = '';
+            copyButtonText = 'Correct Text';
+            showReciteSection = false; // Hide recite if copy is clicked
+            showBlindReciteSection = false; // Hide blind recite
+            activeButton = 'copy';
+            renderApp();
+        }
+
+        function handleCopyTypedText() {
+            const expectedText = normalizeLine(getDetailedViewLines(selectedItem).join(' ')); // Normalize full text for comparison
+            const enteredText = normalizeLine(copyInputText);
+
+            if (enteredText === expectedText) {
+                const el = document.createElement('textarea');
+                el.value = copyInputText;
+                document.body.appendChild(el);
+                el.select();
+                try {
+                    document.execCommand('copy');
+                    copyButtonText = 'Correct!';
+                    copyInputText = ''; // Clear input on success
+                    message = ''; // Clear any previous messages
+                } catch (err) {
+                    message = 'Failed to copy to clipboard.';
+                    copyButtonText = 'Wrong!';
+                }
+                document.body.removeChild(el);
+            } else {
+                copyButtonText = 'Wrong!';
+                message = '';
+            }
+            renderApp();
+        }
+
+        function handleCopyInput(e) {
+            copyInputText = e.target.value;
+            copyButtonText = 'Correct Text'; // Reset button text on input change
+            renderApp();
+        }
+
+        function handleReciteClick() {
+            showReciteSection = true;
+            reciteInputText = '';
+            message = '';
+            reciteButtonText = 'Recite Text';
+            showCopySections = false; // Hide copy if recite is clicked
+            showBlindReciteSection = false; // Hide blind recite
+            activeButton = 'recite';
+            renderApp();
+        }
+
+        function handleReciteInput(e) {
+            reciteInputText = e.target.value;
+            reciteButtonText = 'Recite Text'; // Reset button text on input change
+            renderApp();
+        }
+
+        function handleReciteTypedText() {
+            const expectedText = normalizeLine(getDetailedViewLines(selectedItem).join(' ')); // Normalize full text for comparison
+            const enteredText = normalizeLine(reciteInputText);
+
+            if (enteredText === expectedText) {
+                reciteButtonText = 'Correct!';
+                reciteInputText = ''; // Clear input on success
+                message = '';
+            } else {
+                reciteButtonText = 'Wrong!';
+                message = '';
+            }
+            renderApp();
+        }
+
+        // --- Blind Recite Functions ---
+        function handleBlindReciteClick() {
+            showBlindReciteSection = true;
+            currentReciteLineIndex = 0;
+            reciteExpectedLines = getDetailedViewLines(selectedItem);
+            reciteExpectedNormalizedLines = reciteExpectedLines.map(line => normalizeLine(line));
+            blindReciteFeedback = '';
+            blindReciteSummary = '';
+            allBlindReciteLinesCorrect = true; // Reset overall correctness
+            blindReciteInputTextarea.disabled = false; // Ensure input is enabled
+            message = ''; // Clear general messages
+            showCopySections = false; // Hide other sections
+            showReciteSection = false; // Hide other sections
+            activeButton = 'blindRecite';
+            renderApp();
+        }
+
+        function handleNextBlindReciteLine() {
+            if (currentReciteLineIndex < reciteExpectedLines.length) {
+                const expectedLine = reciteExpectedNormalizedLines[currentReciteLineIndex];
+                const enteredLine = normalizeLine(blindReciteInputTextarea.value);
+
+                if (enteredLine === expectedLine) {
+                    blindReciteFeedback = 'Correct!';
+                } else {
+                    blindReciteFeedback = 'Wrong!';
+                    allBlindReciteLinesCorrect = false; // Mark as incorrect if any line is wrong
+                }
+                currentReciteLineIndex++;
+                renderApp(); // Render to show feedback and next line
+            }
+        }
+
+        function handleBlindReciteInputKeydown(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent new line in textarea
+                handleNextBlindReciteLine();
+            }
+        }
+
+        function handleResetBlindRecite() {
+            currentReciteLineIndex = 0;
+            blindReciteFeedback = '';
+            blindReciteSummary = '';
+            allBlindReciteLinesCorrect = true;
+            blindReciteInputTextarea.disabled = false;
+            renderApp();
+        }
+
+
+        // --- Initial Render and Event Listeners Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Render menu cards
+            const menuItems = Object.keys(menuItemsData); // Get keys from data object
+            menuItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transform hover:-translate-y-2 transition duration-300 ease-in-out border border-gray-100 hover:border-blue-300 group";
+                card.innerHTML = `
+                    <h2 class="text-xl font-semibold text-gray-700 mb-2 group-hover:text-blue-600 transition-colors duration-300">${item}</h2>
+                    <p class="text-sm text-gray-500 group-hover:text-blue-500 transition-colors duration-300">Select to view</p>
+                `;
+                card.addEventListener('click', () => handleCardClick(item));
+                menuCardsGrid.appendChild(card);
+            });
+
+            // Add event listeners for detail view buttons
+            backButton.addEventListener('click', handleBackToMenu);
+            viewButton.addEventListener('click', handleViewClick);
+            copyButton.addEventListener('click', handleCopyClick);
+            copyTypedButton.addEventListener('click', handleCopyTypedText);
+            copyInputTextarea.addEventListener('input', handleCopyInput);
+            reciteButton.addEventListener('click', handleReciteClick);
+            reciteTypedButton.addEventListener('click', handleReciteTypedText);
+            reciteInputTextarea.addEventListener('input', handleReciteInput);
+            blindReciteButton.addEventListener('click', handleBlindReciteClick); // New event listener
+            blindReciteNextButton.addEventListener('click', handleNextBlindReciteLine); // New event listener
+            blindReciteInputTextarea.addEventListener('keydown', handleBlindReciteInputKeydown); // New event listener for Enter key
+            blindReciteResetButton.addEventListener('click', handleResetBlindRecite); // New event listener
+
+            // Initial render
+            renderApp();
+        });
+    </script>
+</body>
+</html>
