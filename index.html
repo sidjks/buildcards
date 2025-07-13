@@ -58,10 +58,8 @@
                 </svg>
             </button>
 
-            <!-- Removed selected-item-title h1 from here, main-heading will be used -->
-
             <!-- Action buttons -->
-            <div class="flex flex-wrap justify-center gap-4 mb-8 mt-12"> <!-- Added mt-12 to compensate for removed h1 -->
+            <div class="flex flex-wrap justify-center gap-4 mb-8 mt-12"> <!-- Added mt-12 to compensate for main heading -->
                 <button id="view-button" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75">
                     View
                 </button>
@@ -74,7 +72,6 @@
                 <button id="blind-recite-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
                     Blind Recite
                 </button>
-                <!-- Random Blind Recite button is now outside this div -->
             </div>
 
             <!-- Message display -->
@@ -122,18 +119,28 @@
                     Reset Blind Recite
                 </button>
             </div>
+        </div>
 
-            <!-- Random Blind Recite Section (new, initially hidden) -->
-            <div id="random-blind-recite-section" class="hidden w-full mt-8 p-6 bg-white rounded-2xl shadow-inner flex flex-col items-center">
-                <h3 class="text-2xl font-semibold text-gray-800 mb-3" id="random-blind-recite-heading">Recite: <span id="random-blind-recite-item-name" class="font-bold"></span></h3>
-                <textarea id="random-blind-recite-input-text" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-blue-500 focus:border-blue-500 font-sans resize-none text-base shadow-sm" rows="10" placeholder="Type the full description here..."></textarea>
-                <p id="random-blind-recite-feedback" class="text-lg font-semibold mb-4"></p>
-                <button id="random-blind-recite-check-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75">
-                    Check Recitation
+        <!-- Random Blind Recite Section (new, now a sibling to detail-view) -->
+        <div id="random-blind-recite-section" class="hidden w-full mt-8 p-6 bg-white rounded-2xl shadow-inner flex flex-col items-center">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-3" id="random-blind-recite-heading">Recite: <span id="random-blind-recite-item-name" class="font-bold"></span></h3>
+            <pre id="random-blind-recite-current-line-display" class="hidden text-base text-gray-700 whitespace-pre-wrap font-sans p-2 bg-gray-100 rounded-lg w-full mb-4 text-center"></pre>
+            <textarea id="random-blind-recite-input-text" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-blue-500 focus:border-blue-500 font-sans resize-none text-base shadow-sm" rows="3" placeholder="Type the line here..."></textarea>
+            <p id="random-blind-recite-feedback" class="text-lg font-semibold mb-4"></p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <button id="random-blind-recite-next-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75">
+                    Next Line
+                </button>
+                <button id="random-blind-recite-skip-button" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-75">
+                    Skip
                 </button>
             </div>
-
+            <p id="random-blind-recite-summary" class="text-lg font-bold mt-4"></p>
+            <button id="random-blind-recite-reset-button" class="hidden mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75">
+                Reset Random Recite
+            </button>
         </div>
+
     </div>
 
     <script>
@@ -158,7 +165,10 @@
         let randomBlindReciteItem = null; // New state
         let randomBlindReciteInputText = ''; // New state
         let randomBlindReciteFeedback = ''; // New state
-        let randomBlindReciteExpectedText = ''; // New state (normalized full text)
+        let randomBlindReciteExpectedLines = []; // New state for line-by-line
+        let randomBlindReciteExpectedNormalizedLines = []; // New state for line-by-line
+        let currentRandomBlindReciteLineIndex = 0; // New state for line-by-line tracking
+        let allRandomBlindReciteLinesCorrect = true; // New state for overall correctness
         let activeButton = null; // 'view', 'copy', 'recite', 'blindRecite', 'randomBlindRecite', or null
 
         // --- DOM Elements ---
@@ -167,11 +177,11 @@
         const menuCardsGrid = document.getElementById('menu-cards-grid');
         const detailView = document.getElementById('detail-view');
         const backButton = document.getElementById('back-button');
-        // const selectedItemTitle = document.getElementById('selected-item-title'); // No longer needed
         const viewButton = document.getElementById('view-button');
         const copyButton = document.getElementById('copy-button');
         const reciteButton = document.getElementById('recite-button');
         const blindReciteButton = document.getElementById('blind-recite-button');
+        const randomBlindReciteButtonContainer = document.getElementById('random-blind-recite-button-container'); // Container for the random button
         const randomBlindReciteButton = document.getElementById('random-blind-recite-button'); // New button
         const messageDisplay = document.getElementById('message-display');
         const copySections = document.getElementById('copy-sections');
@@ -189,11 +199,18 @@
         const blindReciteNextButton = document.getElementById('blind-recite-next-button');
         const blindReciteSummaryDisplay = document.getElementById('blind-recite-summary');
         const blindReciteResetButton = document.getElementById('blind-recite-reset-button');
+
         const randomBlindReciteSection = document.getElementById('random-blind-recite-section');
+        const randomBlindReciteHeading = document.getElementById('random-blind-recite-heading'); // New reference for heading
         const randomBlindReciteItemName = document.getElementById('random-blind-recite-item-name');
+        const randomBlindReciteCurrentLineDisplay = document.getElementById('random-blind-recite-current-line-display'); // New line display for random
         const randomBlindReciteInputTextarea = document.getElementById('random-blind-recite-input-text');
         const randomBlindReciteFeedbackDisplay = document.getElementById('random-blind-recite-feedback');
-        const randomBlindReciteCheckButton = document.getElementById('random-blind-recite-check-button');
+        const randomBlindReciteNextButton = document.getElementById('random-blind-recite-next-button'); // Renamed from check
+        const randomBlindReciteSkipButton = document.getElementById('random-blind-recite-skip-button'); // New skip button
+        const randomBlindReciteSummaryDisplay = document.getElementById('random-blind-recite-summary'); // New summary for random
+        const randomBlindReciteResetButton = document.getElementById('random-blind-recite-reset-button'); // New reset for random
+
 
         // --- Data: Menu Items Descriptions ---
         const menuItemsData = {
@@ -423,11 +440,11 @@ Tortilla - 8”
             // Hide/show main views
             if (selectedItem) {
                 menuCardsGrid.classList.add('hidden');
-                randomBlindReciteButton.classList.add('hidden'); // Hide random button on detail view
+                randomBlindReciteButtonContainer.classList.add('hidden'); // Hide random button container on detail view
                 detailView.classList.remove('hidden');
             } else {
                 menuCardsGrid.classList.remove('hidden');
-                randomBlindReciteButton.classList.remove('hidden'); // Show random button on main view
+                randomBlindReciteButtonContainer.classList.remove('hidden'); // Show random button container on main view
                 detailView.classList.add('hidden');
             }
 
@@ -505,11 +522,31 @@ Tortilla - 8”
                 blindReciteSection.classList.add('hidden');
             }
 
-            // Update Random Blind Recite section visibility
+            // Update Random Blind Recite section visibility (now line-by-line)
             if (showRandomBlindReciteSection) {
                 randomBlindReciteSection.classList.remove('hidden');
-                randomBlindReciteItemName.textContent = randomBlindReciteItem;
-                randomBlindReciteInputTextarea.value = randomBlindReciteInputText;
+                if (currentRandomBlindReciteLineIndex < randomBlindReciteExpectedLines.length) {
+                    randomBlindReciteCurrentLineDisplay.classList.add('hidden'); // Keep line content hidden
+                    randomBlindReciteHeading.textContent = `Recite: ${randomBlindReciteItem} (Line ${currentRandomBlindReciteLineIndex + 1} of ${randomBlindReciteExpectedLines.length})`;
+                    randomBlindReciteInputTextarea.value = randomBlindReciteInputText; // Set value from state
+                    randomBlindReciteNextButton.classList.remove('hidden');
+                    randomBlindReciteSummaryDisplay.classList.add('hidden');
+                    randomBlindReciteResetButton.classList.add('hidden');
+                    randomBlindReciteInputTextarea.focus(); // Focus input for typing
+                    randomBlindReciteInputTextarea.disabled = false; // Ensure it's enabled
+                } else {
+                    // End of recitation
+                    randomBlindReciteCurrentLineDisplay.classList.add('hidden');
+                    randomBlindReciteHeading.textContent = `Recitation Complete for ${randomBlindReciteItem}!`;
+                    randomBlindReciteInputTextarea.value = '';
+                    randomBlindReciteInputTextarea.disabled = true;
+                    randomBlindReciteNextButton.classList.add('hidden');
+                    randomBlindReciteSummaryDisplay.classList.remove('hidden');
+                    randomBlindReciteSummaryDisplay.textContent = allRandomBlindReciteLinesCorrect ? 'All lines were correct!' : 'Some lines were wrong.';
+                    randomBlindReciteSummaryDisplay.classList.remove('text-green-600', 'text-red-600');
+                    randomBlindReciteSummaryDisplay.classList.add(allRandomBlindReciteLinesCorrect ? 'text-green-600' : 'text-red-600');
+                    randomBlindReciteResetButton.classList.remove('hidden');
+                }
                 randomBlindReciteFeedbackDisplay.textContent = randomBlindReciteFeedback;
                 randomBlindReciteFeedbackDisplay.classList.remove('text-green-600', 'text-red-600');
                 if (randomBlindReciteFeedback === 'Correct!') {
@@ -517,7 +554,6 @@ Tortilla - 8”
                 } else if (randomBlindReciteFeedback === 'Wrong!') {
                     randomBlindReciteFeedbackDisplay.classList.add('text-red-600');
                 }
-                randomBlindReciteInputTextarea.focus(); // Focus input
             } else {
                 randomBlindReciteSection.classList.add('hidden');
             }
@@ -733,13 +769,16 @@ Tortilla - 8”
             const randomIndex = Math.floor(Math.random() * itemNames.length);
             randomBlindReciteItem = itemNames[randomIndex];
 
-            const fullDescriptionLines = getDetailedViewLines(randomBlindReciteItem);
-            randomBlindReciteExpectedText = normalizeTextForComparison(fullDescriptionLines.join('\n'));
+            randomBlindReciteExpectedLines = getDetailedViewLines(randomBlindReciteItem); // Get lines for the random item
+            randomBlindReciteExpectedNormalizedLines = randomBlindReciteExpectedLines.map(line => normalizeTextForComparison(line));
+            currentRandomBlindReciteLineIndex = 0; // Start from the first line
+            allRandomBlindReciteLinesCorrect = true; // Reset overall correctness
 
-            randomBlindReciteInputText = '';
-            randomBlindReciteFeedback = '';
-            randomBlindReciteInputTextarea.disabled = false;
+            randomBlindReciteInputText = ''; // Clear input text
+            randomBlindReciteFeedback = ''; // Clear feedback
+            randomBlindReciteInputTextarea.disabled = false; // Ensure input is enabled
             randomBlindReciteItemName.textContent = randomBlindReciteItem; // Update item name in heading
+            randomBlindReciteInputTextarea.focus(); // Focus input for typing
         }
 
         function handleRandomBlindReciteClick() {
@@ -749,32 +788,46 @@ Tortilla - 8”
             showReciteSection = false;
             showBlindReciteSection = false;
             activeButton = 'randomBlindRecite';
+            selectedItem = null; // Ensure selectedItem is null for the overall heading to be "Please Select..."
             startNewRandomBlindRecite(); // Start with a new random item
             renderApp();
         }
 
-        function handleRandomBlindReciteCheck() {
-            const enteredText = normalizeTextForComparison(randomBlindReciteInputTextarea.value);
+        function handleNextRandomBlindReciteLine() { // Renamed from handleRandomBlindReciteCheck
+            if (currentRandomBlindReciteLineIndex < randomBlindReciteExpectedLines.length) {
+                const expectedLine = randomBlindReciteExpectedNormalizedLines[currentRandomBlindReciteLineIndex];
+                const enteredLine = normalizeTextForComparison(randomBlindReciteInputTextarea.value);
 
-            if (enteredText === randomBlindReciteExpectedText) {
-                randomBlindReciteFeedback = 'Correct!';
-                // Automatically go to next random item
-                setTimeout(() => {
-                    startNewRandomBlindRecite();
-                    renderApp(); // Re-render to show new item
-                }, 500); // Short delay for feedback visibility
-            } else {
-                randomBlindReciteFeedback = 'Wrong!';
-                // Switch to copy mode for the item they got wrong
-                setTimeout(() => {
-                    selectedItem = randomBlindReciteItem; // Set the item they got wrong
-                    handleCopyClick(); // Switch to copy mode for this item
-                    randomBlindReciteFeedback = ''; // Clear feedback
-                    showRandomBlindReciteSection = false; // Hide random recite section
-                    renderApp();
-                }, 1000); // Short delay before switching mode
+                if (enteredLine === expectedLine) {
+                    randomBlindReciteFeedback = 'Correct!';
+                } else {
+                    randomBlindReciteFeedback = 'Wrong!';
+                    allRandomBlindReciteLinesCorrect = false;
+                }
+                currentRandomBlindReciteLineIndex++;
+                randomBlindReciteInputText = ''; // Clear input for the next line
+                renderApp(); // Render to show feedback and next line
             }
-            renderApp(); // Render immediately to show feedback
+
+            // If all lines are done, check overall result
+            if (currentRandomBlindReciteLineIndex >= randomBlindReciteExpectedLines.length) {
+                if (!allRandomBlindReciteLinesCorrect) {
+                    // If any line was wrong, switch to copy mode for the item
+                    setTimeout(() => {
+                        selectedItem = randomBlindReciteItem; // Set the item they got wrong
+                        handleCopyClick(); // Switch to copy mode for this item
+                        randomBlindReciteFeedback = ''; // Clear feedback
+                        showRandomBlindReciteSection = false; // Hide random recite section
+                        renderApp();
+                    }, 1000); // Short delay before switching mode
+                } else {
+                    // If all lines correct, start a new random item
+                    setTimeout(() => {
+                        startNewRandomBlindRecite();
+                        renderApp(); // Re-render to show new item
+                    }, 500); // Short delay for feedback visibility
+                }
+            }
         }
 
         function handleRandomBlindReciteInput(e) {
@@ -786,8 +839,21 @@ Tortilla - 8”
         function handleRandomBlindReciteInputKeydown(e) {
             if (e.key === 'Enter') {
                 e.preventDefault(); // Prevent new line in textarea
-                handleRandomBlindReciteCheck();
+                handleNextRandomBlindReciteLine();
             }
+        }
+
+        function handleRandomBlindReciteSkip() { // New skip function
+            startNewRandomBlindRecite(); // Get a new random item
+            randomBlindReciteFeedback = ''; // Clear any feedback
+            renderApp();
+        }
+
+        function handleRandomBlindReciteReset() { // New reset function for random mode
+            startNewRandomBlindRecite();
+            randomBlindReciteFeedback = '';
+            randomBlindReciteInputTextarea.disabled = false;
+            renderApp();
         }
 
 
@@ -822,9 +888,11 @@ Tortilla - 8”
 
             // New random blind recite event listeners
             randomBlindReciteButton.addEventListener('click', handleRandomBlindReciteClick);
-            randomBlindReciteCheckButton.addEventListener('click', handleRandomBlindReciteCheck);
+            randomBlindReciteNextButton.addEventListener('click', handleNextRandomBlindReciteLine); // Renamed from check button
             randomBlindReciteInputTextarea.addEventListener('input', handleRandomBlindReciteInput);
             randomBlindReciteInputTextarea.addEventListener('keydown', handleRandomBlindReciteInputKeydown);
+            randomBlindReciteSkipButton.addEventListener('click', handleRandomBlindReciteSkip); // New skip button event listener
+            randomBlindReciteResetButton.addEventListener('click', handleRandomBlindReciteReset); // New reset button event listener
 
 
             // Initial render
